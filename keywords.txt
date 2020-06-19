@@ -1,5 +1,6 @@
 AudioFileSource	KEYWORD1
 AudioFileSourceSPIFFS	KEYWORD1
+AudioFileSourceLittleFS	KEYWORD1
 AudioFileSourceFS	KEYWORD1
 AudioFileSourcePROGMEM	KEYWORD1
 AudioFileSourceHTTPStream	KEYWORD1
@@ -15,6 +16,7 @@ AudioGeneratorMOD	KEYWORD1
 AudioGeneratorMIDI	KEYWORD1
 AudioGeneratorMP3	KEYWORD1
 AudioGeneratorRTTTL	KEYWORD1
+AudioGeneratorTalkie	KEYWORD1
 AudioGeneratorWAV	KEYWORD1
 AudioOutput	KEYWORD1
 AudioOutputI2S	KEYWORD1
@@ -25,3 +27,4 @@ AudioOutputSerialWAV	KEYWORD1
 AudioOutputSPIFFSWAV	KEYWORD1
 AudioOutputMixer	KEYWORD1
 AudioOutputMixerStub	KEYWORD1
+AudioOutputSPDIF	KEYWORD1

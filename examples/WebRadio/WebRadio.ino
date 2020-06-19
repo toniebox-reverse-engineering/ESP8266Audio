@@ -37,8 +37,13 @@
 // To run, set your ESP8266 build to 160MHz, update the SSID info, and upload.
 
 // Enter your WiFi setup here:
-const char *SSID = "....";
-const char *PASSWORD = "....";
+#ifndef STASSID
+#define STASSID "your-ssid"
+#define STAPSK  "your-password"
+#endif
+
+const char* ssid = STASSID;
+const char* password = STAPSK;
 
 WiFiServer server(80);
 
@@ -262,7 +267,7 @@ void setup()
   WiFi.softAPdisconnect(true);
   WiFi.mode(WIFI_STA);
   
-  WiFi.begin(SSID, PASSWORD);
+  WiFi.begin(ssid, password);
 
   // Try forever
   while (WiFi.status() != WL_CONNECTED) {
@@ -420,6 +425,11 @@ void loop()
       HandleChangeURL(&client, params);
     } else {
       WebError(&client, 404, NULL, false);
+    }
+    // web clients hate when door is violently shut
+    while (client.available()) {
+      PumpDecoder();
+      client.read();
     }
   }
   PumpDecoder();

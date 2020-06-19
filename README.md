@@ -1,4 +1,4 @@
-# ESP8266Audio - supports ESP8266 & ESP32 [![Build Status](https://travis-ci.org/earlephilhower/ESP8266Audio.svg?branch=master)](https://travis-ci.org/earlephilhower/ESP8266Audio)
+# ESP8266Audio - supports ESP8266 & ESP32 [![Gitter](https://badges.gitter.im/ESP8266Audio/community.svg)](https://gitter.im/ESP8266Audio/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)  [![Build Status](https://travis-ci.org/earlephilhower/ESP8266Audio.svg?branch=master)](https://travis-ci.org/earlephilhower/ESP8266Audio)
 Arduino library for parsing and decoding MOD, WAV, MP3, FLAC, MIDI, AAC, and RTTL files and playing them on an I2S DAC or even using a software-simulated delta-sigma DAC with dynamic 32x-128x oversampling.
 
 ESP8266 is fully supported and most mature, but ESP32 is also mostly there with built-in DAC as well as external ones.
@@ -30,29 +30,16 @@ A neat MQTT-driven ESP8266 light-and-sound device (alarm? toy? who can say!) was
 A very interesting "linear clock" with a stepper motor, NTP time keeping, and configurable recorded chimes with schematics, 3D printer plans, and source code, is now available http://home.kpn.nl/bderogee1980/projects/linear_clock/linear_clock.html
 
 ## Prerequisites
-First, make sure you are running the 2.4 or GIT head version of the Arduino libraries for ESP8266, or the latest ESP32 SDK from Espressif.
+First, make sure you are running the 2.6.3/later or GIT head version of the Arduino libraries for ESP8266, or the latest ESP32 SDK from Espressif.
 
 You can use GIT to pull right from GitHub: see [this README](https://github.com/esp8266/Arduino/blob/master/README.md#using-git-version) for detailed instructions.
 
-## ESP-32 SPIFFS Errors
-The latest official release of the ESP32-Arduino seems to have broken SPIFFS, but a patch has just been committed to git head.  If you want to run SPIFFS, please follow the directions below, courtesy of @rfestag:
-```sh
-cd ~/Arduino/hardware/espressif/esp32 # Or wherever you have it installed
-git pull # Update to the latest
-cd tools
-python get.py # On my system, I have python3 installed by default, so I had to run python2.7 get.py
-# Re-upload files using the new mkspiffs that is installed
-# Then reload your sketch
-```
-Be sure to use the [ESP32 SPIFFS](https://github.com/me-no-dev/arduino-esp32fs-plugin) upload plugin before running your sketch to upload the data files once the fixed IDE is set up.
-
 ## Installation
-Install the library and the SPI driver library in your ~/Arduino/libraries
+Install the library in your ~/Arduino/libraries
 ```sh
 mkdir -p ~/Arduino/libraries
 cd ~/Arduino/libraries
 git clone https://github.com/earlephilhower/ESP8266Audio
-git clone https://github.com/Gianbacchio/ESP8266_Spiram
 ```
 
 When in the IDE please select the following options on the ESP8266:
@@ -158,6 +145,8 @@ AudioOutputI2S: Interface for any I2S 16-bit DAC.  Sends stereo or mono signals 
 
 AudioOutputI2SNoDAC:  Abuses the I2S interface to play music without a DAC.  Turns it into a 32x (or higher) oversampling delta-sigma DAC.  Use the schematic below to drive a speaker or headphone from the I2STx pin (i.e. Rx).  Note that with this interface, depending on the transistor used, you may need to disconnect the Rx pin from the driver to perform serial uploads.  Mono-only output, of course.
 
+AudioOutputSPDIF (experimental): Another way to abuse the I2S peripheral to send out BMC encoded S/PDIF bitstream. To interface with S/PDIF receiver it needs optical or coaxial transceiver, for which some examples can be found at https://www.epanorama.net/documents/audio/spdif.html. It should work even with the simplest form with red LED and current limiting resistor, fed into TOSLINK cable. Minimum sample rate supported by is 32KHz. Due to BMC coding, actual symbol rate on the pin is 4x normal I2S data rate, which drains DMA buffers quickly. See more details inside [AudioOutputSPDIF.cpp](src/AudioOutputSPDIF.cpp#L17)
+
 AudioOutputSerialWAV:  Writes a binary WAV format with headers to the Serial port.  If you capture the serial output to a file you can play it back on your development system.
 
 AudioOutputSPIFFSWAV:  Writes a binary WAV format with headers to a SPIFFS filesystem.  Ensure the FS is mounted and SPIFFS is started before calling.  USe the SetFilename() call to pick the output file before starting.
@@ -183,7 +172,7 @@ There are many other variants out there, and they should all work reasonably wel
 ## Software I2S Delta-Sigma DAC (i.e. playing music with a single transistor and speaker)
 For the best fidelity, and stereo to boot, spend the money on a real I2S DAC.  Adafruit makes a great mono one with amplifier, and you can find stereo unamplified ones on eBay or elsewhere quite cheaply.  However, thanks to the software delta-sigma DAC with 32x oversampling (up to 128x if the audio rate is low enough) you can still have pretty good sound!
 
-Use the AudioOutputI2S*No*DAC object instead of the AudioOutputI2S in your code, and the following schematic to drive a 2-3W speaker using a single $0.05 NPN 2N3904 transistor:
+Use the `AudioOutputI2S*No*DAC` object instead of the `AudioOutputI2S` in your code, and the following schematic to drive a 2-3W speaker using a single $0.05 NPN 2N3904 transistor and ~1K resistor:
 
 ```
                             2N3904 (NPN)
@@ -195,7 +184,7 @@ Use the AudioOutputI2S*No*DAC object instead of the AudioOutputI2S in your code,
                               |  |         | A|
 ESP8266-GND ------------------+  |  +------+ K| 
                                  |  |      | E|
-ESP8266-I2SOUT (Rx) -------------+  |      \ R|
+ESP8266-I2SOUT (Rx) -----/\/\/\--+  |      \ R|
                                     |       +-|
 USB 5V -----------------------------+
 
@@ -205,15 +194,15 @@ If you don't have a 5V source available on your ESP model, you can use the 5V fr
 
 Connections are as a follows:
 ```
-ESP8266-RX(I2S tx) -- 2N3904 Base
+ESP8266-RX(I2S tx) -- Resistor (~1K ohm, not critical) -- 2N3904 Base
 ESP8266-GND        -- 2N3904 Emitter
 USB-5V             -- Speaker + Terminal
 2N3904-Collector   -- Speaker - Terminal
 ```
 
-Basically the transistor acts as a switch and requires only a drive of 1/beta (~1/1000 for the transistor specified) times the speaker current.  As shown you've got a max current of (5-0.7)/8=540mA and a power of 0.54^2 * 8 = ~2.3W into the speaker.
+*NOTE*:  A prior version of this schematic had a direct connection from the ESP8266 to the base of the transistor.  While this does provide the maximum amplitude, it also can draw more current from the 8266 than is safe, and can also cause the transistor to overheat.
 
-When using the software delta-sigma DAC, even though our playback circuit is not using the LRCLK or BCLK pins, the ESP8266 internal hardware *will* be driving them.  So these pins cannot be used as outputs in your application.  However, you can use the LRCLK and BCLK pins as *inputs*.  Simply start playback, then use the standard pinMode(xxx, INPUT/INPUT_PULLUP) Arduino commands and you can, for example, use those two pins to read a button or sensor.
+As of the latest ESP8266Audio release, with the software delta-sigma DAC the LRCLK and BCLK pins *can* be used by an application.  Simply use normal `pinMode` and `dicitalWrite` or `digitalRead` as desired.
 
 ### High pitched buzzing with the 1-T circuit
 The 1-T amp can _NOT_ drive any sort of amplified speaker.  If there is a power or USB input to the speaker, or it has lights or Bluetooth or a battery, it can _NOT_ be used with this circuit.
@@ -234,9 +223,24 @@ If you've built the amp but are not getting any sound, @msmcmickey wrote up a ve
 2. If connected properly, do you have ~5 volts between the collector and emitter?
 3.  Was the transistor possibly damaged/overheated during soldering, or by connecting it improperly? Out-of-circuit diode check voltage drop test using a multimeter from base->emitter and base->collector should be between .5 and .7 volts. If it's shorted or open or conducting in both directions, then replace it and make sure it's connected properly.
 
+## SPDIF optical output 
+The proper way would be using optical TOSLINK transmitter (i.e. TOTXxxx). For testing, you can try with ~660nm red LED and resistor. Same as your basic Blink project with external LED, just that the LED will blink a bit faster. 
+```
+                ____
+ESP Pin -------|____|--------+ 
+                             | 
+                            --- 
+                             V LED 
+                            --- 
+                             |
+Ground  ---------------------+
+```
+For ESP8266 with red LED (~1.9Vf drop) you need minimum 150Ohm resistor (12mA max per pin), and output pin is fixed (GPIO3/RX0).On ESP32 it is confgurable with `AudioOutputSPDIF(gpio_num)`.
+
 ## Using external SPI RAM to increase buffer
-A class allows you to use a 23lc1024 SPI RAM from Microchip as input buffer. This chip connects to ESP8266 HSPI port and uses an [external SPI RAM library](https://github.com/Gianbacchio/ESP8266_Spiram).
-You need to choose another pin than GPIO15 for Cs as this pin is already used by the I2S port. Here is an example with the Cs pin plugged to GPIO00 on NodeMCU board.
+A class allows you to use a 23lc1024 SPI RAM from Microchip as input buffer. This chip connects to ESP8266 HSPI port and provides a large buffer to help avoid hiccus in playback of web streams.
+
+The current version allows for using the standard hardware CS (GPIO15) or any other pin via software at slightly less performance.  The following schematic shows one example:
 
 ![Example of SPIRAM Schematic](examples/StreamMP3FromHTTP_SPIRAM/Schema_Spiram.png)
 
