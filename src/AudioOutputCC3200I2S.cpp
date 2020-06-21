@@ -1,5 +1,5 @@
 /*
-  AudioOutputI2S
+  AudioOutputCC3200I2S
   Base class for I2S interface port
   
   Copyright (C) 2017  Earle F. Philhower, III
@@ -24,9 +24,9 @@
 #else
   #include <i2s.h>
 #endif
-#include "AudioOutputI2S.h"
+#include "AudioOutputCC3200I2S.h"
 
-AudioOutputI2S::AudioOutputI2S(int port, int output_mode, int dma_buf_count, int use_apll)
+AudioOutputCC3200I2S::AudioOutputCC3200I2S(int port, int output_mode, int dma_buf_count, int use_apll)
 {
   this->portNo = port;
   this->i2sOn = false;
@@ -85,10 +85,10 @@ AudioOutputI2S::AudioOutputI2S(int port, int output_mode, int dma_buf_count, int
 #else
   (void) dma_buf_count;
   (void) use_apll;
-  if (!i2sOn) {
+  if (!i2sOn) {/*
     orig_bck = READ_PERI_REG(PERIPHS_IO_MUX_MTDO_U);
     orig_ws = READ_PERI_REG(PERIPHS_IO_MUX_GPIO2_U);
-    i2s_begin();
+    i2s_begin();*/
   }
 #endif
   i2sOn = true;
@@ -99,7 +99,7 @@ AudioOutputI2S::AudioOutputI2S(int port, int output_mode, int dma_buf_count, int
   SetRate(44100); // Default
 }
 
-AudioOutputI2S::~AudioOutputI2S()
+AudioOutputCC3200I2S::~AudioOutputCC3200I2S()
 {
 #ifdef ESP32
   if (i2sOn) {
@@ -107,12 +107,12 @@ AudioOutputI2S::~AudioOutputI2S()
     i2s_driver_uninstall((i2s_port_t)portNo); //stop & destroy i2s driver
   }
 #else
-  if (i2sOn) i2s_end();
+  //if (i2sOn) i2s_end();
 #endif
   i2sOn = false;
 }
 
-bool AudioOutputI2S::SetPinout(int bclk, int wclk, int dout)
+bool AudioOutputCC3200I2S::SetPinout(int bclk, int wclk, int dout)
 {
 #ifdef ESP32
   if (output_mode == INTERNAL_DAC || output_mode == INTERNAL_PDM) return false; // Not allowed
@@ -133,44 +133,44 @@ bool AudioOutputI2S::SetPinout(int bclk, int wclk, int dout)
 #endif
 }
 
-bool AudioOutputI2S::SetRate(int hz)
+bool AudioOutputCC3200I2S::SetRate(int hz)
 {
   // TODO - have a list of allowable rates from constructor, check them
   this->hertz = hz;
 #ifdef ESP32
   i2s_set_sample_rates((i2s_port_t)portNo, AdjustI2SRate(hz)); 
 #else
-  i2s_set_rate(AdjustI2SRate(hz));
+  //i2s_set_rate(AdjustI2SRate(hz));
 #endif
   return true;
 }
 
-bool AudioOutputI2S::SetBitsPerSample(int bits)
+bool AudioOutputCC3200I2S::SetBitsPerSample(int bits)
 {
   if ( (bits != 16) && (bits != 8) ) return false;
   this->bps = bits;
   return true;
 }
 
-bool AudioOutputI2S::SetChannels(int channels)
+bool AudioOutputCC3200I2S::SetChannels(int channels)
 {
   if ( (channels < 1) || (channels > 2) ) return false;
   this->channels = channels;
   return true;
 }
 
-bool AudioOutputI2S::SetOutputModeMono(bool mono)
+bool AudioOutputCC3200I2S::SetOutputModeMono(bool mono)
 {
   this->mono = mono;
   return true;
 }
 
-bool AudioOutputI2S::begin()
+bool AudioOutputCC3200I2S::begin()
 {
   return true;
 }
 
-bool AudioOutputI2S::ConsumeSample(int16_t sample[2])
+bool AudioOutputCC3200I2S::ConsumeSample(int16_t sample[2])
 {
   int16_t ms[2];
 
@@ -195,11 +195,11 @@ bool AudioOutputI2S::ConsumeSample(int16_t sample[2])
   return i2s_write_bytes((i2s_port_t)portNo, (const char*)&s32, sizeof(uint32_t), 0);
 #else
   uint32_t s32 = ((Amplify(ms[RIGHTCHANNEL]))<<16) | (Amplify(ms[LEFTCHANNEL]) & 0xffff);
-  return i2s_write_sample_nb(s32); // If we can't store it, return false.  OTW true
+  //return i2s_write_sample_nb(s32); // If we can't store it, return false.  OTW true
 #endif
 }
 
-void AudioOutputI2S::flush() {
+void AudioOutputCC3200I2S::flush() {
 #ifdef ESP32
   // makes sure that all stored DMA samples are consumed / played
   int buffersize = 64 * this->dma_buf_count;
@@ -212,7 +212,7 @@ void AudioOutputI2S::flush() {
 #endif
 }
 
-bool AudioOutputI2S::stop()
+bool AudioOutputCC3200I2S::stop()
 {
 #ifdef ESP32
   i2s_zero_dma_buffer((i2s_port_t)portNo);

@@ -1,5 +1,5 @@
 /*
-  AudioOutputI2S
+  AudioOutputCC3200I2S
   Base class for an I2S output port
   
   Copyright (C) 2017  Earle F. Philhower, III
@@ -18,16 +18,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOOUTPUTI2S_H
-#define _AUDIOOUTPUTI2S_H
+#ifndef _AUDIOOUTPUTCC3200I2S_H
+#define _AUDIOOUTPUTCC3200I2S_H
 
 #include "AudioOutput.h"
 
-class AudioOutputI2S : public AudioOutput
+class AudioOutputCC3200I2S : public AudioOutput
 {
   public:
-    AudioOutputI2S(int port=0, int output_mode=EXTERNAL_I2S, int dma_buf_count = 8, int use_apll=APLL_DISABLE);
-    virtual ~AudioOutputI2S() override;
+    AudioOutputCC3200I2S(int port=0, int output_mode=EXTERNAL_I2S, int dma_buf_count = 8, int use_apll=APLL_DISABLE);
+    virtual ~AudioOutputCC3200I2S() override;
     bool SetPinout(int bclkPin, int wclkPin, int doutPin);
     virtual bool SetRate(int hz) override;
     virtual bool SetBitsPerSample(int bits) override;

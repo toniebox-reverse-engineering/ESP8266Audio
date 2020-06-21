@@ -2,4 +2,4 @@
 #include "AudioLogger.h"
 
 DevNullOut silencedLogger;
-Print* audioLogger = &silencedLogger;
+DevNullOut* audioLogger = &silencedLogger;
