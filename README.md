@@ -1,4 +1,4 @@
-# ESP8266Audio - supports ESP8266 & ESP32 [![Gitter](https://badges.gitter.im/ESP8266Audio/community.svg)](https://gitter.im/ESP8266Audio/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)  [![Build Status](https://travis-ci.org/earlephilhower/ESP8266Audio.svg?branch=master)](https://travis-ci.org/earlephilhower/ESP8266Audio)
+# ESP8266Audio - supports ESP8266 & ESP32 [![Gitter](https://badges.gitter.im/ESP8266Audio/community.svg)](https://gitter.im/ESP8266Audio/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) 
 Arduino library for parsing and decoding MOD, WAV, MP3, FLAC, MIDI, AAC, and RTTL files and playing them on an I2S DAC or even using a software-simulated delta-sigma DAC with dynamic 32x-128x oversampling.
 
 ESP8266 is fully supported and most mature, but ESP32 is also mostly there with built-in DAC as well as external ones.
@@ -14,10 +14,14 @@ On the ESP32, AAC-SBR is supported (many webradio stations use this to reduce ba
 
 MIDI decoding comes from a highly ported [MIDITONES](https://github.com/LenShustek/miditones) combined with a massively memory-optimized [TinySoundFont](https://github.com/schellingb/TinySoundFont), see the respective source files for more information.
 
+Opus, OGG, and OpusFile are from [Xiph.org](https://xiph.org) with the Xiph license and patent described in src/{opusfile,libggg,libopus}/COPYING..  **NOTE** Opus decoding currently only works on the ESP32 due to the large memory requirements of opusfile.  PRs to rewrite it to be less memory intensive would be much appreciated.
+
 ## Neat Things People Have Done With ESP8266Audio
 If you have a neat use for this library, [I'd love to hear about it](mailto:earlephilhower@yahoo.com)!
 
 My personal use of the ESP8266Audio library is only to drive a 3D-printed, network-time-setting alarm clock for my kids which can play an MP3 instead of a bell to wake them up, called [Psychoclock](https://github.com/earlephilhower/psychoclock).
+
+Harald Sattler has built a neat German [word clock with MP3 alarm](http://www.harald-sattler.de/html/mini-wecker.htm). Detailed discussion on the process and models are included.
 
 Erich Heinemann has developed a Stomper (instrument for playing samples in real-time during a live stage performance) that you can find more info about [here](https://github.com/ErichHeinemann/hman-stomper).
 

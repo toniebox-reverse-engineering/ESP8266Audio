@@ -1268,6 +1268,7 @@ short tsf_read_short_cached(tsf *f, int pos)
 	f->timestamp[repl] = f->epoch++;
 	f->offset[repl] = readOff;
 	misses++;
+//	fprintf(stderr, "buffer[%d][%d-%d = %d]\n", repl, pos, readOff, pos - readOff);
 	return f->buffer[repl][pos - readOff];
 }
 
@@ -1420,9 +1421,9 @@ static void tsf_voice_render(tsf* f, struct tsf_voice* v, float* outputBuffer, i
 }
 
 
-void DumpF32P32(char *name, long long x) {
-  printf("%s = %08x.%08x\n", name, (int32_t)((x>>32)&0xffffffff), (int32_t)(x&0xffffffff));
-}
+//void DumpF32P32(char *name, long long x) {
+//  printf("%s = %08x.%08x\n", name, (int32_t)((x>>32)&0xffffffff), (int32_t)(x&0xffffffff));
+//}
 static void tsf_voice_render_fast(tsf* f, struct tsf_voice* v, short* outputBuffer, int numSamples)
 {
   struct tsf_region* region = v->region;
@@ -1443,7 +1444,7 @@ static void tsf_voice_render_fast(tsf* f, struct tsf_voice* v, short* outputBuff
   struct tsf_voice_lowpass tmpLowpass = v->lowpass;
 
   TSF_BOOL dynamicLowpass = (region->modLfoToFilterFc || region->modEnvToFilterFc);
-  float tmpSampleRate, tmpInitialFilterFc, tmpModLfoToFilterFc, tmpModEnvToFilterFc;
+  float tmpSampleRate = f->outSampleRate, tmpInitialFilterFc, tmpModLfoToFilterFc, tmpModEnvToFilterFc;
 
   TSF_BOOL dynamicPitchRatio = (region->modLfoToPitch || region->modEnvToPitch || region->vibLfoToPitch);
   //double pitchRatio;
@@ -1453,8 +1454,8 @@ static void tsf_voice_render_fast(tsf* f, struct tsf_voice* v, short* outputBuff
   TSF_BOOL dynamicGain = (region->modLfoToVolume != 0);
   float noteGain, tmpModLfoToVolume;
 
-  if (dynamicLowpass) tmpSampleRate = f->outSampleRate, tmpInitialFilterFc = (float)region->initialFilterFc, tmpModLfoToFilterFc = (float)region->modLfoToFilterFc, tmpModEnvToFilterFc = (float)region->modEnvToFilterFc;
-  else tmpSampleRate = 0, tmpInitialFilterFc = 0, tmpModLfoToFilterFc = 0, tmpModEnvToFilterFc = 0;
+  if (dynamicLowpass) tmpInitialFilterFc = (float)region->initialFilterFc, tmpModLfoToFilterFc = (float)region->modLfoToFilterFc, tmpModEnvToFilterFc = (float)region->modEnvToFilterFc;
+  else tmpInitialFilterFc = 0, tmpModLfoToFilterFc = 0, tmpModEnvToFilterFc = 0;
 
   if (dynamicPitchRatio) pitchRatioF32P32 = 0, tmpModLfoToPitch = (float)region->modLfoToPitch, tmpVibLfoToPitch = (float)region->vibLfoToPitch, tmpModEnvToPitch = (float)region->modEnvToPitch;
   else {
@@ -1501,6 +1502,7 @@ static void tsf_voice_render_fast(tsf* f, struct tsf_voice* v, short* outputBuff
     while (blockSamples-- && tmpSourceSamplePositionF32P32 < tmpSampleEndF32P32)
     {
       unsigned int pos = (unsigned int)(tmpSourceSamplePositionF32P32>>32);
+      if (pos == 0xffffffff) pos = 0;
       short val = tsf_read_short_cached(f, pos);
       int32_t val32 = (int)val * (int)gainMonoFP;
 
