@@ -8,7 +8,7 @@ class DevNullOut: public Print
 {
 public:
     virtual size_t write(uint8_t) { return 1; }
-    int printf_P(const char *fmt, ...) { return 0; };
+    virtual int printf_P(const char *fmt, ...) { Serial.print(fmt);return 0; };
 };
 
 extern DevNullOut silencedLogger;
